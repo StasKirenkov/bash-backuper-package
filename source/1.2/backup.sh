@@ -1,41 +1,56 @@
 #!/bin/sh
 
-#Занизим приоритет выполнения, что бы не 'жрать лишние' ресурсы
-renice 19 -p $$
-
 #************************************************#
 #                 backup.sh                      #
 #           Author: Kirenkov Stas                #
-#               April 27, 2012                   #
+#          Created: April 27, 2012               #
+#       Last Updated: February 6, 2017           #
+#       https://github.com/StasKirenkov/         #
 #                                                #
-#       Backuping up of selected project         #
+# Backuping up of selected project and database  #
+#                                                #
 #************************************************#
 
-# Получаем текущие дату и время в формате: yyyy_mm_dd_hh_mm_ss
-archDate=`date +%Y_%m_%d_%H_%M_%S`
+# OVERRIDE THE PRIORITY OF THE PROCESS
+renice 19 -p $$
 
-# Бэкап файлов? yes || no
-fileBackup="yes";
+# GET THE CURRENT DATE AND TIME IN THE FORMAT: yyyy_mm_dd_hh_mm_ss
+dateArchived=`date +%Y_%m_%d_%H_%M_%S`
 
-# Корневая дирректория для хранения резервных копий
-backupPath='/srv/www/htdocs/backup';
+# REQUIRES FILE SYSTEM BACKUP?
+# Default value: 'yes'
+# Possible values:
+#   'yes' - when you needed backup of filesystem
+#   'no' - when you DON'T needed backup of filesystem
+fileBackup='yes';
 
-#Признак одиночного запуска с передачей параметров
-ONCE="no";
+# THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
+backupRootDirectory='/srv/www/htdocs/backup';
 
-# Кол-во актуальных архивов (для ротации по кол-ву)
-total=5;
+# START BACKUP WITH ARGUMENTS FROM THE CONSOLE
+# Default value: 'no'
+# Possible values:
+#   'no' - Is default value, were get array of projects to backup
+#   'yes' - when need backup once project from console
+once="no";
+
+# NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
+maximumNumberArchives=5;
 
 # Кол-во дней за которые хранить архивы (для ротации по дате)
-days=5
+maximumNumberDays=5
 
-# Минимально кол-во свободного места на НЖМД для хранения архивов (задается в МегаБайтах)
-minfreespace="2048";
+# MINIMUM FREE STORAGE SPACE (IN MEGABYTES)
+limitFreeSpace='2048';
 
-# Бэкап MySQL баз? yes || no
-mysqlBackup="no";
+# REQUIRES MYSQL DATABASE BACKUP?
+# Default value: 'yes'
+# Possible values:
+#   'yes' - when you needed backup of MySQL DataBase
+#   'no' - when you DON'T needed backup of MySQL DataBase
+mysqlBackup='yes';
 
-#Разбор параметров из коммандной строки
+# PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
 do
 case $i in
@@ -46,7 +61,7 @@ case $i in
     arch_Name[0]="${i#*=}"
     ;;
     -o=*|--once=*)
-    ONCE="yes"
+    once="yes"
     ;;
     -x=*|--path=*)
     exclude_list[0]="${i#*=}"
@@ -56,13 +71,8 @@ case $i in
     ;;
 esac
 done
-#echo PATH = ${arch_Path[0]}
-#echo NAME PROJECT = ${arch_Name[0]}
-#echo ONCE = ${ONCE}
-#
-#exit;
 
-if [ "${ONCE}" == "no" ]
+if [ "${once}" == "no" ]
 then
     # Массив дирректорий для архивации
     arch_Path[0]="/srv/www/htdocs";
@@ -101,18 +111,18 @@ fi;
 function arch ()
 {
         # Проверяем сущестование дирректории бэкапа
-        if [ ! -d "${backupPath}" ]
+        if [ ! -d "${backupRootDirectory}" ]
         then
                 #Создаем дирректорию для архива
-                mkdir -p ${backupPath}
+                mkdir -p ${backupRootDirectory}
         fi;
 
         # Проверяем кол-во свободного места на НЖМД
-        freespace=`df -m ${backupPath} | grep dev | awk '{print $4}'`; # Работает для локальных директорий
-        #freespace=`df -m ${backupPath} | grep 4 | awk '{print $3}'`; # Работает для примонтированной директории
+        freespace=`df -m ${backupRootDirectory} | grep dev | awk '{print $4}'`; # Работает для локальных директорий
+        #freespace=`df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'`; # Работает для примонтированной директории
 
         # Проверяем достаточность свободного места на НЖМД
-        if [ "${minfreespace}" -ge "${freespace}" ]; then
+        if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
             echo "Свободное место на жестком диске закончилось. Очищаем старые архивы."
             #Проводим очистку архивов, по их актуальному кол-ву
             clean_by_count
@@ -135,7 +145,7 @@ function arch ()
                         for ((i=0; i<${elLen}; i++));
                         do
                                 # Дирректория бэкапа
-                                path=${backupPath}"/"${arch_Name[$i]}"/"${archDate};
+                                path=${backupRootDirectory}"/"${arch_Name[$i]}"/"${dateArchived};
 
                                 # Проверяем сущестование дирректории архивации
                                 if [ ! -d "${path}" ]
@@ -168,7 +178,7 @@ function arch ()
                                 dbs=$(mysql -u${arch_base_login[$u]} -p${arch_base_pass[$u]} -e "show databases;" | grep [[:alnum:]])
 
                                 # Дирректория бэкапа
-                                path=${backupPath}"/"${arch_Name[$u]}"/"${archDate};
+                                path=${backupRootDirectory}"/"${arch_Name[$u]}"/"${dateArchived};
 
                                 # Проверяем сущестование дирректории бэкапа
                                 if [ ! -d "${path}" ]
@@ -213,7 +223,7 @@ function clean_by_date ()
         for ((k=0; k<${elLen}; ++k));
         do
                 # Дирректория бэкапа
-                path=${backupPath}"/"${arch_Name[$k]}"/";
+                path=${backupRootDirectory}"/"${arch_Name[$k]}"/";
 
                 # Получаем вложенные дирректории с отдельными архивами
                 inDir=$(ls ${path} -l -1t | grep '^d' |awk '{print $8}');
@@ -224,7 +234,7 @@ function clean_by_date ()
                 # Раскладываем вложенные дирректории
                 for i in `ls ${path} -l -1t | grep '^d' |awk '{print $8}'`;
                 do
-                        find ${path}${i} -mtime +${days} -type d -exec rm -rf {} \;
+                        find ${path}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
                 done
         done
 }
@@ -238,7 +248,7 @@ function clean_by_count ()
         for ((k=0; k<${elLen}; k++));
         do
                 # Дирректория бэкапа
-                path=${backupPath}"/"${arch_Name[$k]}"/";
+                path=${backupRootDirectory}"/"${arch_Name[$k]}"/";
 
                 # Получаем вложенные дирректории с отдельными архивами
                 inDir=$(ls ${path} -l -1t | grep '^d' |awk '{print $9}');
@@ -246,7 +256,7 @@ function clean_by_count ()
                 # Счетчик
                 count=0;
 
-                preCount=$((total-1));
+                preCount=$((maximumNumberArchives-1));
 
                 # Раскладываем вложенные дирректории
                 for i in `ls ${path} -l -1t | grep '^d' |awk '{print $9}'`;
