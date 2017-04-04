@@ -1,4 +1,7 @@
 #!/bin/sh
+#!/bin/bash
+#!/usr/bin/env bash
+#!/usr/bin/env sh
 
 #************************************************#
 #                 backup.sh                      #
@@ -11,72 +14,72 @@
 #                                                #
 #************************************************#
 
-# GET THIS SCRIPT NAME
-scriptName=`basename "$0"`
-
 # OVERRIDE THE PRIORITY OF THE PROCESS
 renice 19 -p $$
 
+# GET THIS SCRIPT NAME
+declare -r scriptName=`basename "$0"`
+
 # GET THE CURRENT DATE AND TIME:
-dateArchived=`date +%Y_%m_%d_%H_%M_%S`
+declare -r dateArchived=`date +%Y_%m_%d_%H_%M_%S`
 
 # REQUIRES FILE SYSTEM BACKUP?
 # Default value: 'yes'
 # Possible values:
 #   'yes' - when you needed backup of filesystem
 #   'no' - when you DON'T needed backup of filesystem
-filesystemBackup='yes';
+declare -r filesystemBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-backupRootDirectory='/srv/www/my_project/backup';
+declare -r backupRootDirectory='/srv/www/my_project/backup';
 
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
 # Possible values:
 #   'yes' - when need backup solitary project from console
 #   'no' - Is default value, were get array of projects to backup
-solitary='no';
+declare -r solitary='no';
 
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
-maximumNumberArchives=5;
+declare -r -i maximumNumberArchives=5;
 
 # NUMBER OF DAYS FOR WHICH TO STORE ARCHIVES (FOR ROTATION BY DATE)
-maximumNumberDays=5
+declare -r -i maximumNumberDays=5
 
 # MINIMUM FREE STORAGE SPACE (IN MEGABYTES)
-limitFreeSpace='2048';
+declare -r limitFreeSpace='2048';
 
 # REQUIRES MYSQL DATABASE BACKUP?
-# Default value: 'yes'
+# Default value: 'no'
 # Possible values:
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
-mysqlBackup='yes';
+declare -r mysqlBackup='no';
 
 # REQUIRES ALL DATABASE BACKUP? (exclude system bases)
 # Default value: 'no'
 # Possible values:
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
-allDataBase='no';
+declare -r allDataBase='no';
 
 # ARRAY OF DIRECTORIES FOR BACKUP
-declare -a backupProjectDir
+declare -a -g backupProjectDir
 # ARRAY OF EXCEPTIONS FOR BACKUP
-declare -a exclusionList
+declare -a -g exclusionList
 # ARRAY OF PROJECT NAMES FOR BACKUP
-declare -a backupProjectName
+declare -a -g backupProjectName
 # ARRAY OF DATABASE FOR BACKUP
-declare -a dataBaseName
+declare -a -g dataBaseName
 # THE ARRAYS OF USER LOGINS AND PASSWORDS FOR MYSQL
-declare -a dataBaseLogin
-declare -a dataBasePassword
+declare -a -g dataBaseLogin
+declare -a -g dataBasePassword
 
 # Counters
-backupProjectCounter=0
-exclusionListCounter=0
-dbUserCounter=0
-counterSubdirectory=0;
+declare -i backupProjectCounter=0
+declare -i exclusionListCounter=0
+declare -i dbUserCounter=0
+declare -i counterSubdirectory=0;
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
