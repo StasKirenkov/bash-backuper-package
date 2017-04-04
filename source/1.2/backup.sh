@@ -37,7 +37,7 @@ once="no";
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
 maximumNumberArchives=5;
 
-# Кол-во дней за которые хранить архивы (для ротации по дате)
+# NUMBER OF DAYS FOR WHICH TO STORE ARCHIVES (FOR ROTATION BY DATE)
 maximumNumberDays=5
 
 # MINIMUM FREE STORAGE SPACE (IN MEGABYTES)
