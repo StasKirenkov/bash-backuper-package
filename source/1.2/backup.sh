@@ -25,13 +25,13 @@ dateArchived=`date +%Y_%m_%d_%H_%M_%S`
 fileBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-backupRootDirectory='/srv/www/htdocs/backup';
+backupRootDirectory='/srv/www/my_project/backup';
 
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
 # Possible values:
-#   'no' - Is default value, were get array of projects to backup
 #   'yes' - when need backup once project from console
+#   'no' - Is default value, were get array of projects to backup
 once="no";
 
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
@@ -49,6 +49,13 @@ limitFreeSpace='2048';
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
 mysqlBackup='yes';
+
+# REQUIRES ALL DATABASE BACKUP? (exclude system bases)
+# Default value: 'no'
+# Possible values:
+#   'yes' - when you needed backup of MySQL DataBase
+#   'no' - when you DON'T needed backup of MySQL DataBase
+allDataBase="no";
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
@@ -74,37 +81,21 @@ done
 
 if [ "${once}" == "no" ]
 then
-    # Массив дирректорий для архивации
-    arch_Path[0]="/srv/www/htdocs";
-    arch_Path[1]="/srv/www/htdocs/denklienta";
-    arch_Path[2]="/srv/www/htdocs/index_new";
+    # ARRAY OF DIRECTORIES FOR BACKUP
+    arch_Path[0]="/srv/www/my_project";
 
-    # Массив исключений
-    exclude_list[0]="--exclude=*.svn* --exclude=*.git* --exclude=/srv/www/htdocs/backup/* --exclude=/srv/www/htdocs/bitrix/backup/* --exclude=/srv/www/htdocs/backup/* --exclude=/srv/www/htdocs/upload/* --exclude=/srv/www/htdocs/php_my_adm_1038/* --exclude=/srv/www/htdocs/video/* --exclude=/srv/www/htdocs/denklienta/* --exclude=/srv/www/htdocs/index_new/* --exclude=/srv/www/htdocs/bitrix/managed_cache/MYSQL/*";
-    exclude_list[1]="--exclude=*.svn* --exclude=*.git* --exclude=/srv/www/htdocs/denklienta/backup/* --exclude=/srv/www/htdocs/denklienta/upload/* --exclude=/srv/www/htdocs/denklienta/bitrix/backup/* --exclude=/srv/www/htdocs/denklienta/upload/* --exclude=/srv/www/htdocs/denklienta/bitrix/managed_cache/MYSQL/*";
-    exclude_list[2]="";
+    # ARRAY OF EXCEPTIONS FOR BACKUP
+    exclude_list[0]="--exclude=*.git*";
 
-    # Массив наименований проектов
-    arch_Name[0]="etm_corp_site";
-    arch_Name[1]="etm_electroforum";
-    arch_Name[2]="index_page";
+    # ARRAY OF PROJECT NAMES FOR BACKUP
+    arch_Name[0]="my_project";
 
-    # Бэкап MySQL баз? yes || no
-    mysqlBackup="yes";
+    # IF YOU WANT TO BACK UP ONE DATABASE, YOU MUST SPECIFY ITS NAME, AND SET THE 'ALLDATABASE' PARAMETER TO 'NO'
+    dataBaseName[0]="site";
 
-    # Архивировать все базы? yes || no
-    allbases="no";
-
-    # Если необходимо архивировать конкретную базу необходимо задать ее имя, а параметру 'allbases' задать значение 'no'
-    dbName[0]="site";
-    dbName[1]="denkl";
-
-    # Массив пар пользователей и паролей от MySQL
-    arch_base_login[0]="site";
-    arch_base_pass[0]="WYMmeWXMq";
-
-    arch_base_login[1]="denkl";
-    arch_base_pass[1]="frfe43s";
+    # THE ARRAY OF USER PAIRS AND PASSWORDS FOR MYSQL
+    dataBaseLogin[0]="you_login_to_database";
+    dataBasePassword[0]="you_password_to_database";
 fi;
 
 # Непосредственно функция архивации заданной(ых) дирректории(й)
@@ -166,16 +157,16 @@ function arch ()
         fi;
 
         #Считаем кол-во MySQL пользователей для архивации БД
-        sqlUserLen=${#arch_base_login[@]}
+        sqlUserLen=${#dataBaseLogin[@]}
 
         # Проверяем нужен ли бэкап MySQL баз
         if [ "${mysqlBackup}" == "yes" ]
         then
                 for ((u=0; u<=${sqlUserLen}; ++u));
                 do
-                        if [ -n "${arch_base_login[$u]}" ] && [ -n ${arch_base_pass[$u]} ]
+                        if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
                         then
-                                dbs=$(mysql -u${arch_base_login[$u]} -p${arch_base_pass[$u]} -e "show databases;" | grep [[:alnum:]])
+                                dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
 
                                 # Дирректория бэкапа
                                 path=${backupRootDirectory}"/"${arch_Name[$u]}"/"${dateArchived};
@@ -187,7 +178,7 @@ function arch ()
                                         mkdir -p ${path}
                                 fi;
 
-                                if [ "${allbases}" == "yes" ]
+                                if [ "${allDataBase}" == "yes" ]
                                 then
                                         for l in $dbs
                                         do
@@ -198,14 +189,14 @@ function arch ()
                                                 fi;
 
                                                 file=$l.sql
-                                                mysqldump -u${arch_base_login[$u]} -p${arch_base_pass[$u]} --databases $l > /tmp/${file}
+                                                mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases $l > /tmp/${file}
                                                 mkdir -p ${path}"/sql/"
                                                 mv /tmp/$file ${path}"/sql/"${file}
                                         done
-                                elif [ "${allbases}" == "no" ]
+                                elif [ "${allDataBase}" == "no" ]
                                 then
-                                        file=${dbName[$u]}.sql
-                                        mysqldump -u${arch_base_login[$u]} -p${arch_base_pass[$u]} --databases ${dbName[$u]} > /tmp/${file}
+                                        file=${dataBaseName[$u]}.sql
+                                        mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
                                         mkdir -p ${path}"/sql/"
                                         mv /tmp/$file ${path}"/sql/"${file}
                                 fi;
