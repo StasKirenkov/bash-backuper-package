@@ -239,6 +239,9 @@ function create_backup()
 
 function clean_by_date ()
 {
+        local -i k
+        local -i i
+
         # Check the project directories in turn
         for ((k=0; k<${backupProjectCounter}; ++k));
         do
@@ -255,6 +258,9 @@ function clean_by_date ()
 
 function clean_by_count ()
 {
+        local -i k
+        local -i i
+
         # Check the project directories in turn
         for ((k=0; k<${backupProjectCounter}; k++));
         do
