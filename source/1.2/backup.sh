@@ -22,7 +22,7 @@ dateArchived=`date +%Y_%m_%d_%H_%M_%S`
 # Possible values:
 #   'yes' - when you needed backup of filesystem
 #   'no' - when you DON'T needed backup of filesystem
-fileBackup='yes';
+filesystemBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
 backupRootDirectory='/srv/www/my_project/backup';
@@ -81,70 +81,71 @@ done
 
 if [ "${once}" == "no" ]
 then
-    # ARRAY OF DIRECTORIES FOR BACKUP
+    # Array of directories for backup
     arch_Path[0]="/srv/www/my_project";
 
-    # ARRAY OF EXCEPTIONS FOR BACKUP
+    # Array of exceptions for backup
     exclude_list[0]="--exclude=*.git*";
 
-    # ARRAY OF PROJECT NAMES FOR BACKUP
+    # Array of project names for backup
     arch_Name[0]="my_project";
 
-    # IF YOU WANT TO BACK UP ONE DATABASE, YOU MUST SPECIFY ITS NAME, AND SET THE 'ALLDATABASE' PARAMETER TO 'NO'
+    # If you want to back up one database, you must specify its name, and set the 'alldatabase' parameter to 'no'
     dataBaseName[0]="site";
 
-    # THE ARRAY OF USER PAIRS AND PASSWORDS FOR MYSQL
+    # The array of user pairs and passwords for mysql
     dataBaseLogin[0]="you_login_to_database";
     dataBasePassword[0]="you_password_to_database";
 fi;
 
-# Непосредственно функция архивации заданной(ых) дирректории(й)
-function arch ()
+# THE ARCHIVING FUNCTION OF THE SPECIFIED DIRECTORY (S)
+function create_backup()
 {
-        # Проверяем сущестование дирректории бэкапа
+        # Check the existence of the backup directory
         if [ ! -d "${backupRootDirectory}" ]
         then
-                #Создаем дирректорию для архива
+                # Create a directory for the archive, if not created
                 mkdir -p ${backupRootDirectory}
         fi;
 
-        # Проверяем кол-во свободного места на НЖМД
-        freespace=`df -m ${backupRootDirectory} | grep dev | awk '{print $4}'`; # Работает для локальных директорий
-        #freespace=`df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'`; # Работает для примонтированной директории
+        # Check the amount of free space on the HDD
+        freespace=`df -m ${backupRootDirectory} | grep dev | awk '{print $4}'`; # For local directories
+        #freespace=`df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'`; # For the mounted directory
 
-        # Проверяем достаточность свободного места на НЖМД
+        # Check for free space on the HDD
         if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
-            echo "Свободное место на жестком диске закончилось. Очищаем старые архивы."
-            #Проводим очистку архивов, по их актуальному кол-ву
+            echo "The free space on the hard drive is over. Clear old archives."
+            # Delete old archives, with minimum quantity verification
             clean_by_count
-            echo "Продолжаем резервное копирование"
+            echo "Continue to backup"
             #exit
         fi
 
-        #Считаем кол-во дирректорий для архивации
+        # Count the number of directories for archiving
         elLen=${#arch_Path[@]}
 
-        #Проверяем, есть ли у нас исключения для архивации
+        # Count the number of exemptions for archiving
         exLen=${#exclude_list[@]}
 
-        #Производим архивацию заданной дирректории в дирректорию с архивом
+        # Create a backup of the specified directory in the directory with the archive
         if [ "${elLen}" -gt "0" ]
         then
-                # Проверяем нужен ли бэкап файлов
-                if [ "${fileBackup}" == "yes" ]
+                # Check whether you need to back up the file system
+                if [ "${filesystemBackup}" == "yes" ]
                 then
                         for ((i=0; i<${elLen}; i++));
                         do
-                                # Дирректория бэкапа
+                                # The full path of the backup directory
                                 path=${backupRootDirectory}"/"${arch_Name[$i]}"/"${dateArchived};
 
-                                # Проверяем сущестование дирректории архивации
+                                # Check the existence of the backup directory
                                 if [ ! -d "${path}" ]
                                 then
-                                        #Создаем дирректорию для архива
+                                        # Create a directory for the archive, if it was not created earlier
                                         mkdir -p ${path}
                                 fi;
 
+                                # Check if we have any exceptions for archiving
                                 if [ "${exLen}" -gt "0" ]
                                 then
                                         zip -9 -r ${path}"/"${arch_Name[$i]}.zip ${arch_Path[$i]} ${exclude_list[$i]}
@@ -156,10 +157,10 @@ function arch ()
                 fi;
         fi;
 
-        #Считаем кол-во MySQL пользователей для архивации БД
+        # Count the number of MySQL users to back up the database
         sqlUserLen=${#dataBaseLogin[@]}
 
-        # Проверяем нужен ли бэкап MySQL баз
+        # Check whether MySQL databases are needed
         if [ "${mysqlBackup}" == "yes" ]
         then
                 for ((u=0; u<=${sqlUserLen}; ++u));
@@ -168,21 +169,22 @@ function arch ()
                         then
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
 
-                                # Дирректория бэкапа
-                                path=${backupRootDirectory}"/"${arch_Name[$u]}"/"${dateArchived};
+                                # The full path of the backup directory
+                                path=${backupRootDirectory}"/"${arch_Name[$i]}"/"${dateArchived};
 
-                                # Проверяем сущестование дирректории бэкапа
+                                # Check the existence of the backup directory
                                 if [ ! -d "${path}" ]
                                 then
-                                        #Создаем дирректорию для архива
+                                        # Create a directory for the archive, if it was not created earlier
                                         mkdir -p ${path}
                                 fi;
 
+                                # Check if you need to archive all databases
                                 if [ "${allDataBase}" == "yes" ]
                                 then
                                         for l in $dbs
                                         do
-                                                # Исключаем системные базы
+                                                # Exclude system databases
                                                 if [ "$l" == "Database" ] || [ "$l" == "information_schema" ] || [ "$l" == "mysql" ]
                                                 then
                                                         continue
@@ -262,7 +264,8 @@ function clean_by_count ()
         done
 }
 
-arch # Вызываем функцию архивации
+# Запускаем резервное копирование
+create_backup
 
 # Вызываем функцию очистки НЕ актуальных архивов по:
 # - дате
