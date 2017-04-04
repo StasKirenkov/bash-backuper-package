@@ -32,7 +32,7 @@ backupRootDirectory='/srv/www/my_project/backup';
 # Possible values:
 #   'yes' - when need backup once project from console
 #   'no' - Is default value, were get array of projects to backup
-once="no";
+once='no';
 
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
 maximumNumberArchives=5;
@@ -55,23 +55,40 @@ mysqlBackup='yes';
 # Possible values:
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
-allDataBase="no";
+allDataBase='no';
+
+# ARRAY OF DIRECTORIES FOR BACKUP
+declare -a backupProjectDir
+# ARRAY OF EXCEPTIONS FOR BACKUP
+declare -a exclusionList
+# ARRAY OF PROJECT NAMES FOR BACKUP
+declare -a backupProjectName
+# ARRAY OF DATABASE FOR BACKUP
+declare -a dataBaseName
+# THE ARRAYS OF USER LOGINS AND PASSWORDS FOR MYSQL
+declare -a dataBaseLogin
+declare -a dataBasePassword
+
+# Counters
+backupProjectCounter=0
+exclusionListCounter=0
+dbUserCounter=0
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
 do
 case $i in
     -p=*|--path=*)
-    arch_Path[0]="${i#*=}"
+    backupProjectDir[0]="${i#*=}"
     ;;
     -n=*|--nameproject=*)
-    arch_Name[0]="${i#*=}"
+    backupProjectName[0]="${i#*=}"
     ;;
     -o=*|--once=*)
     once="yes"
     ;;
     -x=*|--path=*)
-    exclude_list[0]="${i#*=}"
+    exclusionList[0]="${i#*=}"
     ;;
     *)
         echo "Unknown option";
@@ -82,18 +99,18 @@ done
 if [ "${once}" == "no" ]
 then
     # Array of directories for backup
-    arch_Path[0]="/srv/www/my_project";
+    backupProjectDir[0]="/srv/www/my_project";
 
     # Array of exceptions for backup
-    exclude_list[0]="--exclude=*.git*";
+    exclusionList[0]="--exclude=*.git*";
 
     # Array of project names for backup
-    arch_Name[0]="my_project";
+    backupProjectName[0]="my_project";
 
     # If you want to back up one database, you must specify its name, and set the 'alldatabase' parameter to 'no'
     dataBaseName[0]="site";
 
-    # The array of user pairs and passwords for mysql
+    # The array of user logins and passwords for mysql
     dataBaseLogin[0]="you_login_to_database";
     dataBasePassword[0]="you_password_to_database";
 fi;
@@ -122,21 +139,21 @@ function create_backup()
         fi
 
         # Count the number of directories for archiving
-        elLen=${#arch_Path[@]}
+        backupProjectCounter=${#backupProjectDir[@]}
 
         # Count the number of exemptions for archiving
-        exLen=${#exclude_list[@]}
+        exclusionListCounter=${#exclusionList[@]}
 
         # Create a backup of the specified directory in the directory with the archive
-        if [ "${elLen}" -gt "0" ]
+        if [ "${backupProjectCounter}" -gt "0" ]
         then
                 # Check whether you need to back up the file system
                 if [ "${filesystemBackup}" == "yes" ]
                 then
-                        for ((i=0; i<${elLen}; i++));
+                        for ((i=0; i<${backupProjectCounter}; i++));
                         do
                                 # The full path of the backup directory
-                                path=${backupRootDirectory}"/"${arch_Name[$i]}"/"${dateArchived};
+                                path=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
                                 # Check the existence of the backup directory
                                 if [ ! -d "${path}" ]
@@ -146,31 +163,31 @@ function create_backup()
                                 fi;
 
                                 # Check if we have any exceptions for archiving
-                                if [ "${exLen}" -gt "0" ]
+                                if [ "${exclusionListCounter}" -gt "0" ]
                                 then
-                                        zip -9 -r ${path}"/"${arch_Name[$i]}.zip ${arch_Path[$i]} ${exclude_list[$i]}
-                                elif [ "${exLen}" -eq "0" ]
+                                        zip -9 -r ${path}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
+                                elif [ "${exclusionListCounter}" -eq "0" ]
                                 then
-                                        zip -9 -r ${path}"/"${arch_Name[$i]}.zip ${arch_Path[$i]}
+                                        zip -9 -r ${path}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
                                 fi;
                         done
                 fi;
         fi;
 
         # Count the number of MySQL users to back up the database
-        sqlUserLen=${#dataBaseLogin[@]}
+        dbUserCounter=${#dataBaseLogin[@]}
 
         # Check whether MySQL databases are needed
         if [ "${mysqlBackup}" == "yes" ]
         then
-                for ((u=0; u<=${sqlUserLen}; ++u));
+                for ((u=0; u<=${dbUserCounter}; ++u));
                 do
                         if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
                         then
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
 
                                 # The full path of the backup directory
-                                path=${backupRootDirectory}"/"${arch_Name[$i]}"/"${dateArchived};
+                                path=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
                                 # Check the existence of the backup directory
                                 if [ ! -d "${path}" ]
@@ -209,22 +226,13 @@ function create_backup()
 
 function clean_by_date ()
 {
-        # Считаем кол-во дирректорий для архивации
-        elLen=${#arch_Path[@]}
-
-        # Раскладываем дирректории проектов
-        for ((k=0; k<${elLen}; ++k));
+        # Check the project directories in turn
+        for ((k=0; k<${backupProjectCounter}; ++k));
         do
-                # Дирректория бэкапа
-                path=${backupRootDirectory}"/"${arch_Name[$k]}"/";
+                # Backup directory
+                path=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
-                # Получаем вложенные дирректории с отдельными архивами
-                inDir=$(ls ${path} -l -1t | grep '^d' |awk '{print $8}');
-
-                # Счетчик
-                count=0;
-
-                # Раскладываем вложенные дирректории
+                # Checking the nested directories
                 for i in `ls ${path} -l -1t | grep '^d' |awk '{print $8}'`;
                 do
                         find ${path}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
@@ -234,24 +242,18 @@ function clean_by_date ()
 
 function clean_by_count ()
 {
-        # Считаем кол-во дирректорий для архивации
-        elLen=${#arch_Path[@]}
-
-        # Раскладываем дирректории проектов
-        for ((k=0; k<${elLen}; k++));
+        # Check the project directories in turn
+        for ((k=0; k<${backupProjectCounter}; k++));
         do
-                # Дирректория бэкапа
-                path=${backupRootDirectory}"/"${arch_Name[$k]}"/";
+                # Backup directory
+                path=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
-                # Получаем вложенные дирректории с отдельными архивами
-                inDir=$(ls ${path} -l -1t | grep '^d' |awk '{print $9}');
-
-                # Счетчик
+                # Counter
                 count=0;
 
                 preCount=$((maximumNumberArchives-1));
 
-                # Раскладываем вложенные дирректории
+                # Checking the nested directories
                 for i in `ls ${path} -l -1t | grep '^d' |awk '{print $9}'`;
                 do
                         if [ "${count}" -ge "${preCount}" ]
@@ -264,14 +266,14 @@ function clean_by_count ()
         done
 }
 
-# Запускаем резервное копирование
+# Run the backup
 create_backup
 
-# Вызываем функцию очистки НЕ актуальных архивов по:
-# - дате
+# We call the function of cleaning the non-actual archives by:
+# - date
 #clean_by_date
 
-# - колличеству
+# - number of
 clean_by_count
 
 exit 0
