@@ -11,10 +11,13 @@
 #                                                #
 #************************************************#
 
+# GET THIS SCRIPT NAME
+scriptName=`basename "$0"`
+
 # OVERRIDE THE PRIORITY OF THE PROCESS
 renice 19 -p $$
 
-# GET THE CURRENT DATE AND TIME IN THE FORMAT: yyyy_mm_dd_hh_mm_ss
+# GET THE CURRENT DATE AND TIME:
 dateArchived=`date +%Y_%m_%d_%H_%M_%S`
 
 # REQUIRES FILE SYSTEM BACKUP?
@@ -30,9 +33,9 @@ backupRootDirectory='/srv/www/my_project/backup';
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
 # Possible values:
-#   'yes' - when need backup once project from console
+#   'yes' - when need backup solitary project from console
 #   'no' - Is default value, were get array of projects to backup
-once='no';
+solitary='no';
 
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
 maximumNumberArchives=5;
@@ -73,30 +76,31 @@ declare -a dataBasePassword
 backupProjectCounter=0
 exclusionListCounter=0
 dbUserCounter=0
+counterSubdirectory=0;
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
 do
 case $i in
-    -p=*|--path=*)
+    -p=*|--pathway=*)
     backupProjectDir[0]="${i#*=}"
     ;;
     -n=*|--nameproject=*)
     backupProjectName[0]="${i#*=}"
     ;;
-    -o=*|--once=*)
-    once="yes"
+    -o=*|--solitary=*)
+    solitary="yes"
     ;;
-    -x=*|--path=*)
+    -x=*|--pathway=*)
     exclusionList[0]="${i#*=}"
     ;;
     *)
-        echo "Unknown option";
+        echo "Unknown parameter, please use the help: ./"${scriptName}" --help | -h";
     ;;
 esac
 done
 
-if [ "${once}" == "no" ]
+if [ "${solitary}" == "no" ]
 then
     # Array of directories for backup
     backupProjectDir[0]="/srv/www/my_project";
@@ -153,22 +157,22 @@ function create_backup()
                         for ((i=0; i<${backupProjectCounter}; i++));
                         do
                                 # The full path of the backup directory
-                                path=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
+                                pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
                                 # Check the existence of the backup directory
-                                if [ ! -d "${path}" ]
+                                if [ ! -d "${pathway}" ]
                                 then
                                         # Create a directory for the archive, if it was not created earlier
-                                        mkdir -p ${path}
+                                        mkdir -p ${pathway}
                                 fi;
 
                                 # Check if we have any exceptions for archiving
                                 if [ "${exclusionListCounter}" -gt "0" ]
                                 then
-                                        zip -9 -r ${path}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
+                                        zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
                                 elif [ "${exclusionListCounter}" -eq "0" ]
                                 then
-                                        zip -9 -r ${path}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
+                                        zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
                                 fi;
                         done
                 fi;
@@ -187,13 +191,13 @@ function create_backup()
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
 
                                 # The full path of the backup directory
-                                path=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
+                                pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
                                 # Check the existence of the backup directory
-                                if [ ! -d "${path}" ]
+                                if [ ! -d "${pathway}" ]
                                 then
                                         # Create a directory for the archive, if it was not created earlier
-                                        mkdir -p ${path}
+                                        mkdir -p ${pathway}
                                 fi;
 
                                 # Check if you need to archive all databases
@@ -209,15 +213,15 @@ function create_backup()
 
                                                 file=$l.sql
                                                 mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases $l > /tmp/${file}
-                                                mkdir -p ${path}"/sql/"
-                                                mv /tmp/$file ${path}"/sql/"${file}
+                                                mkdir -p ${pathway}"/sql/"
+                                                mv /tmp/$file ${pathway}"/sql/"${file}
                                         done
                                 elif [ "${allDataBase}" == "no" ]
                                 then
                                         file=${dataBaseName[$u]}.sql
                                         mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
-                                        mkdir -p ${path}"/sql/"
-                                        mv /tmp/$file ${path}"/sql/"${file}
+                                        mkdir -p ${pathway}"/sql/"
+                                        mv /tmp/$file ${pathway}"/sql/"${file}
                                 fi;
                         fi;
                 done
@@ -230,12 +234,12 @@ function clean_by_date ()
         for ((k=0; k<${backupProjectCounter}; ++k));
         do
                 # Backup directory
-                path=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
+                pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
                 # Checking the nested directories
-                for i in `ls ${path} -l -1t | grep '^d' |awk '{print $8}'`;
+                for i in `ls ${pathway} -l -1t | grep '^d' |awk '{print $8}'`;
                 do
-                        find ${path}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
+                        find ${pathway}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
                 done
         done
 }
@@ -246,22 +250,19 @@ function clean_by_count ()
         for ((k=0; k<${backupProjectCounter}; k++));
         do
                 # Backup directory
-                path=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
-
-                # Counter
-                count=0;
+                pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
                 preCount=$((maximumNumberArchives-1));
 
                 # Checking the nested directories
-                for i in `ls ${path} -l -1t | grep '^d' |awk '{print $9}'`;
+                for i in `ls ${pathway} -l -1t | grep '^d' |awk '{print $9}'`;
                 do
-                        if [ "${count}" -ge "${preCount}" ]
+                        if [ "${counterSubdirectory}" -ge "${preCount}" ]
                         then
-                                rm -rf ${path}${i};
+                                rm -rf ${pathway}${i};
                         fi;
 
-                        let count=$((${count} + 1));
+                        let counterSubdirectory=$((${counterSubdirectory} + 1));
                 done
         done
 }
