@@ -157,6 +157,8 @@ function create_backup()
                 # Check whether you need to back up the file system
                 if [ "${filesystemBackup}" == "yes" ]
                 then
+                        local -i i
+
                         for ((i=0; i<${backupProjectCounter}; i++));
                         do
                                 # The full path of the backup directory
@@ -187,6 +189,8 @@ function create_backup()
         # Check whether MySQL databases are needed
         if [ "${mysqlBackup}" == "yes" ]
         then
+                local -i u
+
                 for ((u=0; u<=${dbUserCounter}; ++u));
                 do
                         if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
@@ -206,6 +210,8 @@ function create_backup()
                                 # Check if you need to archive all databases
                                 if [ "${allDataBase}" == "yes" ]
                                 then
+                                        local -i l
+
                                         for l in $dbs
                                         do
                                                 # Exclude system databases
