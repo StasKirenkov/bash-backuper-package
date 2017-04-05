@@ -5,6 +5,7 @@ Backuper-package is a admin tools to create a backup of file system and MySQL da
 * [Simple description](#simple-description)
 * [Preamble](#preamble)
   * [Credits / Contributors](#credits-contributors)
+  * [Feedback](#feedback)
 
 ---
 #### <a name="preamble"></a> Preamble
@@ -14,6 +15,9 @@ Details will be later ...
 
 #### <a name="credits-contributors"></a> Credits / Contributors
 The Backuper-package is the original product of many hours of work by Stas Kirenkov, the primary author of the code.
+
+#### <a name="feedback"></a> Feedback
+Feedback is most certainly welcome for this document. Send your additions, comments and criticisms to the itmnewsru@gmail.com
 
 ---
 Author: Stas Kirenkov
