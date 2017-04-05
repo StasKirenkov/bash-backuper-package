@@ -1,7 +1,7 @@
 #!/bin/sh
 #!/bin/bash
-#!/usr/bin/env bash
 #!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #************************************************#
 #                 backup.sh                      #
