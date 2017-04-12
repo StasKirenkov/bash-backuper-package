@@ -7,7 +7,7 @@
 #                 backup.sh                      #
 #           Author: Kirenkov Stas                #
 #          Created: April 27, 2012               #
-#       Last Updated: February 6, 2017           #
+#  Last functional Updated: February 6, 2017     #
 #       https://github.com/StasKirenkov/         #
 #                                                #
 # Backuping up of selected project and database  #
@@ -31,7 +31,7 @@ dateArchived=$(date +%Y_%m_%d_%H_%M_%S)
 filesystemBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-backupRootDirectory='/srv/www/my_project/backup';
+backupRootDirectory='/srv/www/htdocs_';
 
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
@@ -91,10 +91,10 @@ case $i in
 esac
 done
 
-if [ "${solitary}" == "no" ]
+if [ "${solitary}" = "no" ]
 then
     # Array of directories for backup
-    backupProjectDir[0]="/srv/www/my_project";
+    backupProjectDir[0]="/srv/www/htdocs_/config";
 
     # Array of exceptions for backup
     exclusionList[0]="--exclude=*.git*";
@@ -121,8 +121,8 @@ create_backup()
         fi;
 
         # Check the amount of free space on the HDD
-        freespace=`df -m ${backupRootDirectory} | grep dev | awk '{print $4}'`; # For local directories
-        #freespace=`df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'`; # For the mounted directory
+        freespace=$(df -m ${backupRootDirectory} | grep dev | awk '{print $4}'); # For local directories
+        #freespace=$(df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'); # For the mounted directory
 
         # Check for free space on the HDD
         if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
@@ -143,12 +143,9 @@ create_backup()
         if [ "${backupProjectCounter}" -gt "0" ]
         then
                 # Check whether you need to back up the file system
-                if [ "${filesystemBackup}" == "yes" ]
+                if [ "${filesystemBackup}" = "yes" ]
                 then
-                        local i
-
-                        for ((i=0; i<${backupProjectCounter}; i++));
-                        do
+                        while [ "$i" != "${backupProjectCounter}" ]; do
                                 # The full path of the backup directory
                                 pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
@@ -167,6 +164,8 @@ create_backup()
                                 then
                                         zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
                                 fi;
+
+                                i=$(( i + 1 ))
                         done
                 fi;
         fi;
@@ -175,12 +174,9 @@ create_backup()
         dbUserCounter=${#dataBaseLogin[@]}
 
         # Check whether MySQL databases are needed
-        if [ "${mysqlBackup}" == "yes" ]
+        if [ "${mysqlBackup}" = "yes" ]
         then
-                local u
-
-                for ((u=0; u<=${dbUserCounter}; ++u));
-                do
+                while [ "$u" != "${dbUserCounter}" ]; do
                         if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
                         then
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
@@ -196,14 +192,12 @@ create_backup()
                                 fi;
 
                                 # Check if you need to archive all databases
-                                if [ "${allDataBase}" == "yes" ]
+                                if [ "${allDataBase}" = "yes" ]
                                 then
-                                        local l
-
                                         for l in $dbs
                                         do
                                                 # Exclude system databases
-                                                if [ "$l" == "Database" ] || [ "$l" == "information_schema" ] || [ "$l" == "mysql" ]
+                                                if [ "$l" = "Database" ] || [ "$l" = "information_schema" ] || [ "$l" = "mysql" ]
                                                 then
                                                         continue
                                                 fi;
@@ -213,7 +207,7 @@ create_backup()
                                                 mkdir -p ${pathway}"/sql/"
                                                 mv /tmp/$file ${pathway}"/sql/"${file}
                                         done
-                                elif [ "${allDataBase}" == "no" ]
+                                elif [ "${allDataBase}" = "no" ]
                                 then
                                         file=${dataBaseName[$u]}.sql
                                         mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
@@ -221,18 +215,16 @@ create_backup()
                                         mv /tmp/$file ${pathway}"/sql/"${file}
                                 fi;
                         fi;
+
+                        u=$(( u + 1 ))
                 done
         fi;
 }
 
 clean_by_date ()
 {
-        local k
-        local i
-
         # Check the project directories in turn
-        for ((k=0; k<${backupProjectCounter}; ++k));
-        do
+        while [ "$k" != "${backupProjectCounter}" ]; do
                 # Backup directory
                 pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
@@ -241,17 +233,15 @@ clean_by_date ()
                 do
                         find ${pathway}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
                 done
+
+                k=$(( k + 1 ))
         done
 }
 
 clean_by_count ()
 {
-        local k
-        local i
-
         # Check the project directories in turn
-        for ((k=0; k<${backupProjectCounter}; k++));
-        do
+        while [ "$k" != "${backupProjectCounter}" ]; do
                 # Backup directory
                 pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
@@ -267,6 +257,8 @@ clean_by_count ()
 
                         let counterSubdirectory=$((${counterSubdirectory} + 1));
                 done
+
+                k=$(( k + 1 ))
         done
 }
 
