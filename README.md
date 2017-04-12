@@ -27,7 +27,7 @@ Feedback is most certainly welcome for this document. Send your additions, comme
 #### <a name="main-features"></a> Main Features (v1.2)
 
  - Structuring of archival copies by catalogs with the name of the Project and the date of reservation 
-
+>
 **Structure:**
 */Root-dir of backup*
 *|_Project name*
