@@ -31,7 +31,7 @@ dateArchived=$(date +%Y_%m_%d_%H_%M_%S)
 filesystemBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-backupRootDirectory='/srv/www/htdocs_';
+backupRootDirectory='/srv/www/backup';
 
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
@@ -94,7 +94,7 @@ done
 if [ "${solitary}" = "no" ]
 then
     # Array of directories for backup
-    backupProjectDir[0]="/srv/www/htdocs_/config";
+    backupProjectDir[0]="/srv/www/my_project";
 
     # Array of exceptions for backup
     exclusionList[0]="--exclude=*.git*";
@@ -273,3 +273,4 @@ create_backup
 clean_by_count
 
 exit 0
+
