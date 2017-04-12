@@ -10,11 +10,13 @@ Backuper-package is a admin tools to create a backup of file system and MySQL da
 * [Main Features (v1.2)](#main-features)
 
 ---
+[![Code Climate](https://codeclimate.com/github/StasKirenkov/bash-backuper-package/badges/gpa.svg)](https://codeclimate.com/github/StasKirenkov/bash-backuper-package) [![Test Coverage](https://codeclimate.com/github/StasKirenkov/bash-backuper-package/badges/coverage.svg)](https://codeclimate.com/github/StasKirenkov/bash-backuper-package/coverage) [![Issue Count](https://codeclimate.com/github/StasKirenkov/bash-backuper-package/badges/issue_count.svg)](https://codeclimate.com/github/StasKirenkov/bash-backuper-package)
+
+----------
 #### <a name="preamble"></a> Preamble
 The Backuper-package was originally designed to provide a file-based backup system. After there was a need to save and dump MySQL database.
 Subsequently, many extensions of functionality are planned.
 Details will be later ...
-
 
 #### <a name="credits-contributors"></a> Credits / Contributors
 The Backuper-package is the original product of many hours of work by Stas Kirenkov, the primary author of the code.
