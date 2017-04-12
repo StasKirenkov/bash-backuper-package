@@ -18,10 +18,6 @@
     "type": "git",
     "url": "https://github.com/StasKirenkov/bash-backuper-package.git"
   },
-  "bin": {
-    "backup.sh": "./bash-backuper-package/source/1.2/backup.sh"
-  },
-  "dependencies": {},
-  "devDependencies": {},
+  "bin": ["./bash-backuper-package/source/1.2/backup.sh"],
   "author": "Kirenkov Stas <itmnewsru@gmail.com>"
 }
