@@ -1,3 +1,5 @@
-/composer.phar
+# Исключаем composer
+composer.phar
+/vendor/
+# Исключаем не завершенную версию
 source/1.3/
-vendor/
