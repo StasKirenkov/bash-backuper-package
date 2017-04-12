@@ -1,3 +1,4 @@
+![enter image description here](http://edgarallenmarketing.com/wp-content/uploads/2016/01/Data-Loss-Sticky-Notes.gif)
 #### <a name="simple-description"></a> Simple-description
 Backuper-package is a admin tools to create a backup of file system and MySQL databases, example, your web projects.
 
@@ -23,3 +24,4 @@ Feedback is most certainly welcome for this document. Send your additions, comme
 Author: Stas Kirenkov
 Update: 04/05/2017
 Contacts email: itmnewsru@gmail.com
+
