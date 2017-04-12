@@ -18,68 +18,56 @@
 renice 19 -p $$
 
 # GET THIS SCRIPT NAME
-declare -r scriptName=`basename "$0"`
+scriptName=$(basename "$0")
 
 # GET THE CURRENT DATE AND TIME:
-declare -r dateArchived=`date +%Y_%m_%d_%H_%M_%S`
+dateArchived=$(date +%Y_%m_%d_%H_%M_%S)
 
 # REQUIRES FILE SYSTEM BACKUP?
 # Default value: 'yes'
 # Possible values:
 #   'yes' - when you needed backup of filesystem
 #   'no' - when you DON'T needed backup of filesystem
-declare -r filesystemBackup='yes';
+filesystemBackup='yes';
 
 # THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-declare -r backupRootDirectory='/srv/www/my_project/backup';
+backupRootDirectory='/srv/www/my_project/backup';
 
 # START BACKUP WITH ARGUMENTS FROM THE CONSOLE
 # Default value: 'no'
 # Possible values:
 #   'yes' - when need backup solitary project from console
 #   'no' - Is default value, were get array of projects to backup
-declare -r solitary='no';
+solitary='no';
 
 # NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
-declare -r -i maximumNumberArchives=5;
+maximumNumberArchives=5;
 
 # NUMBER OF DAYS FOR WHICH TO STORE ARCHIVES (FOR ROTATION BY DATE)
-declare -r -i maximumNumberDays=5
+maximumNumberDays=5
 
 # MINIMUM FREE STORAGE SPACE (IN MEGABYTES)
-declare -r limitFreeSpace='2048';
+limitFreeSpace='2048';
 
 # REQUIRES MYSQL DATABASE BACKUP?
 # Default value: 'no'
 # Possible values:
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
-declare -r mysqlBackup='no';
+mysqlBackup='no';
 
 # REQUIRES ALL DATABASE BACKUP? (exclude system bases)
 # Default value: 'no'
 # Possible values:
 #   'yes' - when you needed backup of MySQL DataBase
 #   'no' - when you DON'T needed backup of MySQL DataBase
-declare -r allDataBase='no';
-
-# ARRAY OF DIRECTORIES FOR BACKUP
-declare -a -g backupProjectDir
-# ARRAY OF EXCEPTIONS FOR BACKUP
-declare -a -g exclusionList
-# ARRAY OF PROJECT NAMES FOR BACKUP
-declare -a -g backupProjectName
-# ARRAY OF DATABASE FOR BACKUP
-declare -a -g dataBaseName
-# THE ARRAYS OF USER LOGINS AND PASSWORDS FOR MYSQL
-declare -a -g dataBaseLogin
-declare -a -g dataBasePassword
+allDataBase='no';
 
 # Counters
-declare -i backupProjectCounter=0
-declare -i exclusionListCounter=0
-declare -i dbUserCounter=0
-declare -i counterSubdirectory=0;
+backupProjectCounter=0
+exclusionListCounter=0
+dbUserCounter=0
+counterSubdirectory=0;
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
@@ -98,7 +86,7 @@ case $i in
     exclusionList[0]="${i#*=}"
     ;;
     *)
-        echo "Unknown parameter, please use the help: ./"${scriptName}" --help | -h";
+        echo "Unknown parameter, please use the help: ./${scriptName} --help | -h";
     ;;
 esac
 done
@@ -123,7 +111,7 @@ then
 fi;
 
 # THE ARCHIVING FUNCTION OF THE SPECIFIED DIRECTORY (S)
-function create_backup()
+create_backup()
 {
         # Check the existence of the backup directory
         if [ ! -d "${backupRootDirectory}" ]
@@ -157,7 +145,7 @@ function create_backup()
                 # Check whether you need to back up the file system
                 if [ "${filesystemBackup}" == "yes" ]
                 then
-                        local -i i
+                        local i
 
                         for ((i=0; i<${backupProjectCounter}; i++));
                         do
@@ -189,7 +177,7 @@ function create_backup()
         # Check whether MySQL databases are needed
         if [ "${mysqlBackup}" == "yes" ]
         then
-                local -i u
+                local u
 
                 for ((u=0; u<=${dbUserCounter}; ++u));
                 do
@@ -210,7 +198,7 @@ function create_backup()
                                 # Check if you need to archive all databases
                                 if [ "${allDataBase}" == "yes" ]
                                 then
-                                        local -i l
+                                        local l
 
                                         for l in $dbs
                                         do
@@ -237,10 +225,10 @@ function create_backup()
         fi;
 }
 
-function clean_by_date ()
+clean_by_date ()
 {
-        local -i k
-        local -i i
+        local k
+        local i
 
         # Check the project directories in turn
         for ((k=0; k<${backupProjectCounter}; ++k));
@@ -256,10 +244,10 @@ function clean_by_date ()
         done
 }
 
-function clean_by_count ()
+clean_by_count ()
 {
-        local -i k
-        local -i i
+        local k
+        local i
 
         # Check the project directories in turn
         for ((k=0; k<${backupProjectCounter}; k++));
