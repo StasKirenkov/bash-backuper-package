@@ -28,13 +28,13 @@ Feedback is most certainly welcome for this document. Send your additions, comme
 
  - Structuring of archival copies by catalogs with the name of the Project and the date of reservation 
 >
-**Structure:**
-*/Root-dir of backup*
-*|_Project name*
-..*|_Folder with name in date format / time of archiving: "yyyy_mm_dd_hh_mm_ss"*
-....*|_ProjectName.zip*
-......*|_SQL*
-........*|_dataBaseName.sql*
+`**Structure:**`
+`*/Root-dir of backup*`
+`*|_Project name*`
+`..*|_Folder with name in date format / time of archiving: "yyyy_mm_dd_hh_mm_ss"*`
+`....*|_ProjectName.zip*`
+`......*|_SQL*`
+`........*|_dataBaseName.sql*`
 
  - Storage as an archive, so far only ZIP. In the future there will be an expanded choice.
  - 2 types of rotation of obsolete copies, by number or by date / time.
