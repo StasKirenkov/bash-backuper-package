@@ -27,9 +27,8 @@ Feedback is most certainly welcome for this document. Send your additions, comme
 #### <a name="main-features"></a> Main Features (v1.2)
 
  - Structuring of archival copies by catalogs with the name of the Project and the date of reservation;
-+**Structure:**+
->
-![enter image description here](https://lh3.googleusercontent.com/-tvLbpUaozkU/WO3f8NoCkdI/AAAAAAAAfGo/ioHMjSk0sU884kp-kFLcddEl6pmnsIUfACLcB/s0/Image.png "Image.png")
+
+>![enter image description here](https://lh3.googleusercontent.com/-tvLbpUaozkU/WO3f8NoCkdI/AAAAAAAAfGo/ioHMjSk0sU884kp-kFLcddEl6pmnsIUfACLcB/s0/Image.png "Image.png")
 
  - Storage as an archive, so far only ZIP. In the future there will be an expanded choice.;
  - 2 types of rotation of obsolete copies, by number or by date / time;
