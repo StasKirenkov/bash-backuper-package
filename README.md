@@ -31,10 +31,10 @@ Feedback is most certainly welcome for this document. Send your additions, comme
  **Structure:**
 */Root-dir of backup*
 *|_Project name*
-&nbsp;&nbsp;&nbsp;*|_Folder with name in date format / time of archiving: "yyyy_mm_dd_hh_mm_ss"*
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*|_ProjectName.zip*
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*|_SQL*
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*|_dataBaseName.sql*
+..*|_Folder with name in date format / time of archiving: "yyyy_mm_dd_hh_mm_ss"*
+....*|_ProjectName.zip*
+......*|_SQL*
+........*|_dataBaseName.sql*
 
  - Storage as an archive, so far only ZIP. In the future there will be an expanded choice.
  - 2 types of rotation of obsolete copies, by number or by date / time.
