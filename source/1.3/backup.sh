@@ -42,7 +42,7 @@ case $i in
     -o=*|--solitary=*)
     solitary="yes"
     ;;
-    -x=*|--pathway=*)
+    -x=*|--exclusion=*)
     exclusionList[0]="${i#*=}"
     ;;
     -v=*|--version)
