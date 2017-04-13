@@ -1,15 +1,13 @@
-#!/bin/sh
 #!/bin/bash
-#!/bin/dash
-#!/bin/rbash
-##!/usr/bin/env sh
-##!/usr/bin/env bash
+#!/bin/sh
+#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #************************************************#
 #                 backup.sh                      #
 #           Author: Kirenkov Stas                #
 #          Created: April 27, 2012               #
-#       Last Updated: February 6, 2017           #
+#   Last functional Updated: April 12, 2017      #
 #       https://github.com/StasKirenkov/         #
 #                                                #
 # Backuping up of selected project and database  #
@@ -22,72 +20,14 @@ renice 19 -p $$ >/dev/null 2>&1
 # GET THIS SCRIPT VERSION
 version='1.3'
 
-# GET THIS SCRIPT NAME
+# GET PROJECT NAME
 curentName='Backuper-package'
 
 # GET THIS SCRIPT NAME
-scriptName=`basename "$0"`
+scriptName=$(basename "$0")
 
-# GET THE CURRENT DATE AND TIME:
-dateArchived=`date +%Y_%m_%d_%H_%M_%S`
-
-# REQUIRES FILE SYSTEM BACKUP?
-# Default value: 'yes'
-# Possible values:
-#   'yes' - when you needed backup of filesystem
-#   'no' - when you DON'T needed backup of filesystem
-filesystemBackup='yes';
-
-# THE PATH TO THE ROOT DIRECTORY FOR STORING BACKUPS
-backupRootDirectory='/srv/www/my_project/backup';
-
-# START BACKUP WITH ARGUMENTS FROM THE CONSOLE
-# Default value: 'no'
-# Possible values:
-#   'yes' - when need backup solitary project from console
-#   'no' - Is default value, were get array of projects to backup
-solitary='no';
-
-# NUMBER OF STORED ARCHIVES (FOR ROTATION BY COUNTER)
-maximumNumberArchives=5;
-
-# NUMBER OF DAYS FOR WHICH TO STORE ARCHIVES (FOR ROTATION BY DATE)
-maximumNumberDays=5
-
-# MINIMUM FREE STORAGE SPACE (IN MEGABYTES)
-limitFreeSpace='2048';
-
-# REQUIRES MYSQL DATABASE BACKUP?
-# Default value: 'no'
-# Possible values:
-#   'yes' - when you needed backup of MySQL DataBase
-#   'no' - when you DON'T needed backup of MySQL DataBase
-mysqlBackup='no';
-
-# REQUIRES ALL DATABASE BACKUP? (exclude system bases)
-# Default value: 'no'
-# Possible values:
-#   'yes' - when you needed backup of MySQL DataBase
-#   'no' - when you DON'T needed backup of MySQL DataBase
-allDataBase='no';
-
-# ARRAY OF DIRECTORIES FOR BACKUP
-# - param {array of strig} backupProjectDir;
-# ARRAY OF EXCEPTIONS FOR BACKUP
-# - param {array of strig} exclusionList
-# ARRAY OF PROJECT NAMES FOR BACKUP
-# - param {array of strig} backupProjectName
-# ARRAY OF DATABASE FOR BACKUP
-# - param {array of strig} dataBaseName
-# THE ARRAYS OF USER LOGINS AND PASSWORDS FOR MYSQL
-# - param {array of strig} dataBaseLogin
-# - param {array of strig} dataBasePassword
-
-# Counters
-backupProjectCounter=0
-exclusionListCounter=0
-dbUserCounter=0
-counterSubdirectory=0;
+# INCLUDE THE MAIN CONFIGURATION FILE
+source ./config.cfg
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
@@ -106,18 +46,15 @@ case $i in
     exclusionList[0]="${i#*=}"
     ;;
     -v=*|--version)
-        echo "${curentName}" v."${version}";
+        echo "${curentName} v.${version}";
     ;;
     *)
-        echo "Unknown parameter, please use the help: ./"${scriptName}" --help | -h";
+        echo "Unknown parameter, please use the help: ./${scriptName} --help | -h";
     ;;
 esac
 done
 
-
-exit 0
-
-if [ "${solitary}" == "no" ]
+if [ "${solitary}" = "no" ]
 then
     # Array of directories for backup
     backupProjectDir[0]="/srv/www/my_project";
@@ -137,7 +74,7 @@ then
 fi;
 
 # THE ARCHIVING FUNCTION OF THE SPECIFIED DIRECTORY (S)
-function create_backup()
+create_backup()
 {
         # Check the existence of the backup directory
         if [ ! -d "${backupRootDirectory}" ]
@@ -147,8 +84,8 @@ function create_backup()
         fi;
 
         # Check the amount of free space on the HDD
-        freespace=`df -m ${backupRootDirectory} | grep dev | awk '{print $4}'`; # For local directories
-        #freespace=`df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'`; # For the mounted directory
+        freespace=$(df -m ${backupRootDirectory} | grep dev | awk '{print $4}'); # For local directories
+        #freespace=$(df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'); # For the mounted directory
 
         # Check for free space on the HDD
         if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
@@ -169,12 +106,9 @@ function create_backup()
         if [ "${backupProjectCounter}" -gt "0" ]
         then
                 # Check whether you need to back up the file system
-                if [ "${filesystemBackup}" == "yes" ]
+                if [ "${filesystemBackup}" = "yes" ]
                 then
-                        local -i i
-
-                        for ((i=0; i<${backupProjectCounter}; i++));
-                        do
+                        while [ "$i" != "${backupProjectCounter}" ]; do
                                 # The full path of the backup directory
                                 pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
 
@@ -193,6 +127,8 @@ function create_backup()
                                 then
                                         zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
                                 fi;
+
+                                i=$(( i + 1 ))
                         done
                 fi;
         fi;
@@ -201,12 +137,9 @@ function create_backup()
         dbUserCounter=${#dataBaseLogin[@]}
 
         # Check whether MySQL databases are needed
-        if [ "${mysqlBackup}" == "yes" ]
+        if [ "${mysqlBackup}" = "yes" ]
         then
-                local -i u
-
-                for ((u=0; u<=${dbUserCounter}; ++u));
-                do
+                while [ "$u" != "${dbUserCounter}" ]; do
                         if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
                         then
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
@@ -222,14 +155,12 @@ function create_backup()
                                 fi;
 
                                 # Check if you need to archive all databases
-                                if [ "${allDataBase}" == "yes" ]
+                                if [ "${allDataBase}" = "yes" ]
                                 then
-                                        local -i l
-
                                         for l in $dbs
                                         do
                                                 # Exclude system databases
-                                                if [ "$l" == "Database" ] || [ "$l" == "information_schema" ] || [ "$l" == "mysql" ]
+                                                if [ "$l" = "Database" ] || [ "$l" = "information_schema" ] || [ "$l" = "mysql" ]
                                                 then
                                                         continue
                                                 fi;
@@ -239,7 +170,7 @@ function create_backup()
                                                 mkdir -p ${pathway}"/sql/"
                                                 mv /tmp/$file ${pathway}"/sql/"${file}
                                         done
-                                elif [ "${allDataBase}" == "no" ]
+                                elif [ "${allDataBase}" = "no" ]
                                 then
                                         file=${dataBaseName[$u]}.sql
                                         mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
@@ -247,18 +178,17 @@ function create_backup()
                                         mv /tmp/$file ${pathway}"/sql/"${file}
                                 fi;
                         fi;
+
+                        u=$(( u + 1 ))
                 done
         fi;
 }
 
-function clean_by_date ()
+# ROTATION OF OLD COPIES, BY DATE / TIME
+clean_by_date ()
 {
-        local -i k
-        local -i i
-
         # Check the project directories in turn
-        for ((k=0; k<${backupProjectCounter}; ++k));
-        do
+        while [ "$k" != "${backupProjectCounter}" ]; do
                 # Backup directory
                 pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
@@ -267,17 +197,16 @@ function clean_by_date ()
                 do
                         find ${pathway}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
                 done
+
+                k=$(( k + 1 ))
         done
 }
 
-function clean_by_count ()
+# ROTATION OF OLD COPIES, BY NUMBER
+clean_by_count ()
 {
-        local -i k
-        local -i i
-
         # Check the project directories in turn
-        for ((k=0; k<${backupProjectCounter}; k++));
-        do
+        while [ "$k" != "${backupProjectCounter}" ]; do
                 # Backup directory
                 pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
 
@@ -293,6 +222,8 @@ function clean_by_count ()
 
                         let counterSubdirectory=$((${counterSubdirectory} + 1));
                 done
+
+                k=$(( k + 1 ))
         done
 }
 
@@ -307,4 +238,3 @@ create_backup
 clean_by_count
 
 exit 0
-
