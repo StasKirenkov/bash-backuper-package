@@ -17,12 +17,6 @@
 # OVERRIDE THE PRIORITY OF THE PROCESS
 renice 19 -p $$ >/dev/null 2>&1
 
-# GET THIS SCRIPT VERSION
-version='1.3'
-
-# GET PROJECT NAME
-curentName='Backuper-package'
-
 # GET THIS SCRIPT NAME
 scriptName=$(basename "$0")
 
@@ -83,18 +77,24 @@ create_backup()
                 mkdir -p ${backupRootDirectory}
         fi;
 
-        # Check the amount of free space on the HDD
-        freespace=$(df -m ${backupRootDirectory} | grep dev | awk '{print $4}'); # For local directories
-        #freespace=$(df -m ${backupRootDirectory} | grep 4 | awk '{print $3}'); # For the mounted directory
+		#
+		# TODO: Дописать проверку заданного объём свободного места - РАБОТАЕТ
+		# Нужно сделать пересёт, в случае если используемые ед.измерения !== MB
+		#
+		#if echo "$(limitFreeSpace)" | awk 'match($0, /[0-9]+MB/) { print substr( $0, RSTART, RLENGTH )}'; then
+		#fi
+		#
 
-        # Check for free space on the HDD
-        if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
+        # Check the amount of free space on the HDD
+        freespace=$(df -m ${backupRootDirectory} | grep dev | awk '{print $4}');
+
+    	# Check for free space on the HDD
+    	if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
             echo "The free space on the hard drive is over. Clear old archives."
-            # Delete old archives, with minimum quantity verification
-            clean_by_count
-            echo "Continue to backup"
-            #exit
-        fi
+        	# Delete old archives, with minimum quantity verification
+        	clean_by_count
+        	echo "Continue to backup"
+    	fi
 
         # Count the number of directories for archiving
         backupProjectCounter=${#backupProjectDir[@]}
@@ -225,6 +225,11 @@ clean_by_count ()
 
                 k=$(( k + 1 ))
         done
+}
+
+sendMail ()
+{
+	mail -s "$(date +%Y %m %d %H:%M:%S) - ###" "$mailAddress"
 }
 
 # Run the backup
