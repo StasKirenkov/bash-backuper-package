@@ -21,7 +21,7 @@ renice 19 -p $$ >/dev/null 2>&1
 scriptName=$(basename "$0")
 
 # INCLUDE THE MAIN CONFIGURATION FILE
-source ./config.cfg
+source ./main.conf
 
 # PARSING PARAMETERS FROM THE COMMAND LINE
 for i in "$@"
@@ -40,7 +40,7 @@ case $i in
     exclusionList[0]="${i#*=}"
     ;;
     -v=*|--version)
-        echo "${curentName} v.${version}";
+        echo "${backaper_name} v.${version}";
     ;;
     *)
         echo "Unknown parameter, please use the help: ./${scriptName} --help | -h";
@@ -59,7 +59,7 @@ then
     # Array of project names for backup
     backupProjectName[0]="my_project";
 
-    # If you want to back up one database, you must specify its name, and set the 'alldatabase' parameter to 'no'
+    # If you want to back up one database, you must specify its name, and set the 'all_data_base' parameter to 'no'
     dataBaseName[0]="site";
 
     # The array of user logins and passwords for mysql
@@ -71,25 +71,35 @@ fi;
 create_backup()
 {
         # Check the existence of the backup directory
-        if [ ! -d "${backupRootDirectory}" ]
+        if [ ! -d "${backup_root_dir}" ]
         then
-                # Create a directory for the archive, if not created
-                mkdir -p ${backupRootDirectory}
+            # Create a directory for the archive, if not created
+            mkdir -p ${backup_root_dir}
         fi;
+        #
+        # TODO: необходима проверка наличия bc (basic calculator - apt-get install bc)
+        #
 
 		#
-		# TODO: Дописать проверку заданного объём свободного места - РАБОТАЕТ
-		# Нужно сделать пересёт, в случае если используемые ед.измерения !== MB
+		if echo ${min_free_space} | awk 'match($0, /[0-9]+MB/) { print substr( $0, RSTART, RLENGTH )}';
+		then
+			$min_free_space=${min_free_space//MB}
+		fi
 		#
-		#if echo "$(limitFreeSpace)" | awk 'match($0, /[0-9]+MB/) { print substr( $0, RSTART, RLENGTH )}'; then
-		#fi
-		#
+		if echo ${min_free_space} | awk 'match($0, /[0-9]+GB/) { print substr( $0, RSTART, RLENGTH )}';
+		then
+			min_free_spaceClear=${min_free_space//GB}
+			#echo `${min_free_space//GB}*1024`
+			#echo $(${min_free_spaceClear//GB}*1024);
+		fi
+#		echo "${min_free_space}";
+exit;
 
         # Check the amount of free space on the HDD
-        freespace=$(df -m ${backupRootDirectory} | grep dev | awk '{print $4}');
+        freespace=$(df -m ${backup_root_dir} | grep dev | awk '{print $4}');
 
     	# Check for free space on the HDD
-    	if [ "${limitFreeSpace}" -ge "${freespace}" ]; then
+    	if [ "${min_free_space}" -ge "${freespace}" ]; then
             echo "The free space on the hard drive is over. Clear old archives."
         	# Delete old archives, with minimum quantity verification
         	clean_by_count
@@ -97,20 +107,20 @@ create_backup()
     	fi
 
         # Count the number of directories for archiving
-        backupProjectCounter=${#backupProjectDir[@]}
+        projects_counter=${#backupProjectDir[@]}
 
         # Count the number of exemptions for archiving
-        exclusionListCounter=${#exclusionList[@]}
+        exclusions_counter=${#exclusionList[@]}
 
         # Create a backup of the specified directory in the directory with the archive
-        if [ "${backupProjectCounter}" -gt "0" ]
+        if [ "${projects_counter}" -gt "0" ]
         then
                 # Check whether you need to back up the file system
-                if [ "${filesystemBackup}" = "yes" ]
+                if [ "${filesystem_backup}" = "yes" ]
                 then
-                        while [ "$i" != "${backupProjectCounter}" ]; do
+                        while [ "$i" != "${projects_counter}" ]; do
                                 # The full path of the backup directory
-                                pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
+                                pathway=${backup_root_dir}"/"${backupProjectName[$i]}"/"${date_archived};
 
                                 # Check the existence of the backup directory
                                 if [ ! -d "${pathway}" ]
@@ -120,10 +130,10 @@ create_backup()
                                 fi;
 
                                 # Check if we have any exceptions for archiving
-                                if [ "${exclusionListCounter}" -gt "0" ]
+                                if [ "${exclusions_counter}" -gt "0" ]
                                 then
                                         zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
-                                elif [ "${exclusionListCounter}" -eq "0" ]
+                                elif [ "${exclusions_counter}" -eq "0" ]
                                 then
                                         zip -9 -r ${pathway}"/"${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
                                 fi;
@@ -134,18 +144,18 @@ create_backup()
         fi;
 
         # Count the number of MySQL users to back up the database
-        dbUserCounter=${#dataBaseLogin[@]}
+        db_user_counter=${#dataBaseLogin[@]}
 
         # Check whether MySQL databases are needed
-        if [ "${mysqlBackup}" = "yes" ]
+        if [ "${mysql_backup}" = "yes" ]
         then
-                while [ "$u" != "${dbUserCounter}" ]; do
+                while [ "$u" != "${db_user_counter}" ]; do
                         if [ -n "${dataBaseLogin[$u]}" ] && [ -n ${dataBasePassword[$u]} ]
                         then
                                 dbs=$(mysql -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} -e "show databases;" | grep [[:alnum:]])
 
                                 # The full path of the backup directory
-                                pathway=${backupRootDirectory}"/"${backupProjectName[$i]}"/"${dateArchived};
+                                pathway=${backup_root_dir}"/"${backupProjectName[$i]}"/"${date_archived};
 
                                 # Check the existence of the backup directory
                                 if [ ! -d "${pathway}" ]
@@ -155,7 +165,7 @@ create_backup()
                                 fi;
 
                                 # Check if you need to archive all databases
-                                if [ "${allDataBase}" = "yes" ]
+                                if [ "${all_data_base}" = "yes" ]
                                 then
                                         for l in $dbs
                                         do
@@ -170,7 +180,7 @@ create_backup()
                                                 mkdir -p ${pathway}"/sql/"
                                                 mv /tmp/$file ${pathway}"/sql/"${file}
                                         done
-                                elif [ "${allDataBase}" = "no" ]
+                                elif [ "${all_data_base}" = "no" ]
                                 then
                                         file=${dataBaseName[$u]}.sql
                                         mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
@@ -188,14 +198,14 @@ create_backup()
 clean_by_date ()
 {
         # Check the project directories in turn
-        while [ "$k" != "${backupProjectCounter}" ]; do
+        while [ "$k" != "${projects_counter}" ]; do
                 # Backup directory
-                pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
+                pathway=${backup_root_dir}"/"${backupProjectName[$k]}"/";
 
                 # Checking the nested directories
                 for i in `ls ${pathway} -l -1t | grep '^d' |awk '{print $8}'`;
                 do
-                        find ${pathway}${i} -mtime +${maximumNumberDays} -type d -exec rm -rf {} \;
+                        find ${pathway}${i} -mtime +${max_number_days} -type d -exec rm -rf {} \;
                 done
 
                 k=$(( k + 1 ))
@@ -206,21 +216,21 @@ clean_by_date ()
 clean_by_count ()
 {
         # Check the project directories in turn
-        while [ "$k" != "${backupProjectCounter}" ]; do
+        while [ "$k" != "${projects_counter}" ]; do
                 # Backup directory
-                pathway=${backupRootDirectory}"/"${backupProjectName[$k]}"/";
+                pathway=${backup_root_dir}"/"${backupProjectName[$k]}"/";
 
-                preCount=$((maximumNumberArchives-1));
+                preCount=$((max_number_archives-1));
 
                 # Checking the nested directories
                 for i in `ls ${pathway} -l -1t | grep '^d' |awk '{print $9}'`;
                 do
-                        if [ "${counterSubdirectory}" -ge "${preCount}" ]
+                        if [ "${subdir_counter}" -ge "${preCount}" ]
                         then
                                 rm -rf ${pathway}${i};
                         fi;
 
-                        let counterSubdirectory=$((${counterSubdirectory} + 1));
+                        let subdir_counter=$((${subdir_counter} + 1));
                 done
 
                 k=$(( k + 1 ))
@@ -229,7 +239,7 @@ clean_by_count ()
 
 sendMail ()
 {
-	mail -s "$(date +%Y %m %d %H:%M:%S) - ###" "$mailAddress"
+	mail -s "$(date +%Y %m %d %H:%M:%S) - ###" "$mail_address"
 }
 
 # Run the backup
