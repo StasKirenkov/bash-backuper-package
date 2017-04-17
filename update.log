@@ -1,2 +1,8 @@
 v1.3
 * An external configuration file was created
+* Add used KB\|MB\|GB to limited free space for save backups
+* Rewrite name variable with 'https://google.github.io/styleguide/shell.xml'
+* Add ./bin dir for helper-scripts
+* Add ./bin/pre_start.sh - checker for check critical params
+* Added the ability to deallocate MAX_NUMBER_ARCHIVES && MAX_NUMBER_DAYS && MIN_FREE_SPACE
+* Start used Google code style
