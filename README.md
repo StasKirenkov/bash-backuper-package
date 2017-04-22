@@ -26,8 +26,20 @@ Feedback is most certainly welcome for this document. Send your additions, comme
 
 
 ----------
-#### <a name="main-features"></a> Main Features (v1.2)
 
+
+----------
+#### <a name="main-features"></a> Main Features (v1.3)
+
+v1.3
+ - The procedure of pre-start checking of required parameters is added. ./bash-backuper-package/src/1.3/bin/pre_start.sh
+ - All settings are now taken in a separate configuration file ./bash-backuper-package/src/1.3/main.conf
+ - Start used Google code style
+ - Added system messages during the execution, for subsequent logging to a file or to mail
+ - You can specify a limit for limiting the space for saving backups, not only in megabytes, but also in gigabytes
+ - If you do not have problems with the place to store backups, you can turn off the restrictions for the following parameters MAX_NUMBER_ARCHIVES, MAX_NUMBER_DAYS, MIN_FREE_SPACE
+
+v1.2
  - Structuring of archival copies by catalogs with the name of the Project and the date of reservation;
 
 >![enter image description here](https://lh3.googleusercontent.com/-tvLbpUaozkU/WO3f8NoCkdI/AAAAAAAAfGo/ioHMjSk0sU884kp-kFLcddEl6pmnsIUfACLcB/s0/Image.png "Image.png")
