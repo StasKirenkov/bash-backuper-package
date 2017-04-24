@@ -142,7 +142,7 @@ create_backup()
       then
         while [ "$i" != "${projects_counter}" ];
         do
-          if [ -n ${backupProjectName[$i]} ];
+          if [ -n "${backupProjectName[$i]}" ];
           then
             # The full path of the backup directory
             pathway="$BACKUP_ROOT_DIR/${backupProjectName[$i]}/$date_archived";
@@ -250,7 +250,7 @@ clean_by_date ()
       # Check the project directories in turn
       while [ "$k" != "${projects_counter}" ];
       do
-        if [ -n ${backupProjectName[$k]} ];
+        if [ -n "${backupProjectName[$k]}" ];
         then
           # Backup directory
           pathway="$BACKUP_ROOT_DIR/${backupProjectName[$k]}/$date_archived";
@@ -284,7 +284,7 @@ clean_by_count ()
       # Check the project directories in turn
       while [ "$k" != "${projects_counter}" ];
       do
-        if [ -n ${backupProjectName[$k]} ];
+        if [ -n "${backupProjectName[$k]}" ];
         then
           # Backup directory
           pathway="$BACKUP_ROOT_DIR/${backupProjectName[$k]}/";
