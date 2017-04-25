@@ -1,6 +1,6 @@
 {
   "name": "StasKirenkov/bash-backuper-package",
-  "version": "1.2.0",
+  "version": "1.3.3",
   "description": "Backuper-package is a admin tools to create a backup of file system and MySQL databases, example, your web projects.",
   "homepage": "https://github.com/StasKirenkov/bash-backuper-package",
   "license": "MIT",
@@ -15,9 +15,9 @@
     "email": "itmnewsru@gmail.com"
   },
   "repository": {
-    "type": "git",
-    "url": "https://github.com/StasKirenkov/bash-backuper-package.git"
+    "type": "vcs",
+    "url": "https://github.com/StasKirenkov/bash-backuper-package"
   },
-  "bin": ["./bash-backuper-package/source/1.2/backup.sh"],
+  "bin": ["./bash-backuper-package/src/1.3/backup.sh"],
   "author": "Kirenkov Stas <itmnewsru@gmail.com>"
 }
