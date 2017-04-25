@@ -86,17 +86,17 @@ create_backup()
     if [ ! -d "${BACKUP_ROOT_DIR}" ]
     then
       # Create a directory for the archive, if not created
-      mkdir -p ${BACKUP_ROOT_DIR}
+      mkdir -p "${BACKUP_ROOT_DIR}"
 
       message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Dir ${BACKUP_ROOT_DIR} isn't exist and was created.";
     fi;
     #
-    if echo ${MIN_FREE_SPACE} | awk 'match($0, /[0-9]+MB/) { print substr( $0, RSTART, RLENGTH )}';
+    if echo "${MIN_FREE_SPACE}" | awk 'match($0, /[0-9]+MB/) { print substr( $0, RSTART, RLENGTH )}';
     then
       MIN_FREE_SPACE=${MIN_FREE_SPACE//MB}
     fi;
     #
-    if echo ${MIN_FREE_SPACE} | awk 'match($0, /[0-9]+GB/) { print substr( $0, RSTART, RLENGTH )}';
+    if echo "${MIN_FREE_SPACE}" | awk 'match($0, /[0-9]+GB/) { print substr( $0, RSTART, RLENGTH )}';
     then
       MIN_FREE_SPACEClear=${MIN_FREE_SPACE//GB}
       MIN_FREE_SPACE=$((${MIN_FREE_SPACEClear//GB}*1024));
@@ -107,7 +107,7 @@ create_backup()
       message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Check the amount of free space on the HDD";
 
       # Check the amount of free space on the HDD
-      freespace=$(df -m ${BACKUP_ROOT_DIR} | grep dev | awk '{print $4}');
+      freespace=$(df -m "${BACKUP_ROOT_DIR}" | grep dev | awk '{print $4}');
 
       # Check for free space on the HDD
       if [ "${MIN_FREE_SPACE}" -lt "${freespace}" ];
@@ -154,7 +154,7 @@ create_backup()
             then
               # Create a directory for the archive, if it was not created earlier
               message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Create a directory for the archive, if it was not created earlier";
-              mkdir -p ${pathway}
+              mkdir -p "${pathway}"
             fi;
 
             # Check if we have any exceptions for archiving
@@ -162,10 +162,10 @@ create_backup()
 
             if [ "${exclusions_counter}" -gt "0" ]
             then
-              zip -9 -r $pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
+              zip -9 -r "$pathway/${backupProjectName[$i]}".zip "${backupProjectDir[$i]}" "${exclusionList[$i]}"
             elif [ "${exclusions_counter}" -eq "0" ]
             then
-              zip -9 -r $pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
+              zip -9 -r "$pathway/${backupProjectName[$i]}".zip "${backupProjectDir[$i]}"
             fi;
 
             message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Project archiving ${backupProjectName[$i]} is completed";
@@ -200,7 +200,7 @@ create_backup()
             # Create a directory for the archive, if it was not created earlier
             message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Create a directory for the archive, if it was not created earlier";
 
-            mkdir -p ${pathway}
+            mkdir -p "${pathway}"
           fi;
 
           # Check if you need to archive all databases
@@ -216,17 +216,17 @@ create_backup()
                 continue
               fi;
 
-              file=$l.sql
-              mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases $l > /tmp/${file}
-              mkdir -p ${pathway}"/sql/"
-              mv /tmp/$file ${pathway}"/sql/"${file}
+              file="${l}".sql
+              mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases $l > /tmp/"${file}"
+              mkdir -p "${pathway}/sql/"
+              mv /tmp/"$file" "${pathway}/sql/${file}"
             done
           elif [ "${ALL_DATA_BASE}" = "no" ]
           then
-            file=${dataBaseName[$u]}.sql
-            mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/${file}
-            mkdir -p ${pathway}"/sql/"
-            mv /tmp/$file ${pathway}"/sql/"${file}
+            file="${dataBaseName[$u]}".sql
+            mysqldump -u${dataBaseLogin[$u]} -p${dataBasePassword[$u]} --databases ${dataBaseName[$u]} > /tmp/"${file}"
+            mkdir -p "${pathway}/sql/"
+            mv /tmp/"$file" "${pathway}/sql/${file}"
           fi;
 
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Databases archiving is completed";
@@ -258,11 +258,9 @@ clean_by_date ()
           # Checking the nested directories
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Checking the nested directories";
 
-          for i in $(ls ${pathway} -l -1t -q |awk '{print $9}');
+          for i in $(ls "${pathway}" -l -1t -q |awk '{print $9}');
           do
-            echo ${pathway}${i}
-          
-            #find ${pathway}${i} -mtime +${MAX_NUMBER_DAYS} -type d -exec rm -rf {} \;
+            find "${pathway}${i}" -mtime +"${MAX_NUMBER_DAYS}" -type d -exec rm -rf {} \;
           done
 
           k=$(( k + 1 ))
@@ -296,14 +294,14 @@ clean_by_count ()
           # Checking the nested directories
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Checking the nested directories";
 
-          for i in $(ls ${pathway} -l -1t -q |awk '{print $9}');
+          for i in $(ls "${pathway}" -l -1t -q |awk '{print $9}');
           do
             if [ "${subdir_counter}" -ge "${preCount}" ]
             then
-              rm -rf ${pathway}${i};
+              rm -rf "${pathway}${i}";
             fi;
 
-            let subdir_counter=$((${subdir_counter} + 1));
+            let subdir_counter=$(($subdir_counter + 1));
           done
 
           k=$(( k + 1 ))
@@ -320,7 +318,7 @@ sendMail ()
   # IF HAVE ONE OR ANY ERROR, LET'S DO PRINT
   if [ -n "$message_str" ] || [ -n "$error_str" ];
   then
-    mail -s "${BACKAPER_NAME} v.${VERSION} - log result" $MAIL_ADDRESS <<< $(echo -e "$(date +%Y_%m_%d_%H_%M_%S) - ###\r$error_str\r###########\r$message_str")
+    mail -s "${BACKAPER_NAME} v.${VERSION} - log result" "$MAIL_ADDRESS" <<< $(echo -e "$(date +%Y_%m_%d_%H_%M_%S) - ###\r$error_str\r###########\r$message_str")
     exit 0
   fi;
 }
