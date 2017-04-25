@@ -140,7 +140,7 @@ create_backup()
       # Check whether you need to back up the file system
       if [ "${FILESYSTEM_BACKUP}" = "yes" ]
       then
-        while [ "$i" != "${projects_counter}" ];
+        while [[ "$i" -lt "${projects_counter}" ]];
         do
           if [ -n "${backupProjectName[$i]}" ];
           then
@@ -162,10 +162,10 @@ create_backup()
 
             if [ "${exclusions_counter}" -gt "0" ]
             then
-              zip -9 -r "$pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}"
+              zip -9 -r $pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]} ${exclusionList[$i]}
             elif [ "${exclusions_counter}" -eq "0" ]
             then
-              zip -9 -r "$pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]}"
+              zip -9 -r $pathway/${backupProjectName[$i]}.zip ${backupProjectDir[$i]}
             fi;
 
             message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Project archiving ${backupProjectName[$i]} is completed";
@@ -253,14 +253,16 @@ clean_by_date ()
         if [ -n "${backupProjectName[$k]}" ];
         then
           # Backup directory
-          pathway="$BACKUP_ROOT_DIR/${backupProjectName[$k]}/$date_archived";
+          pathway="$BACKUP_ROOT_DIR/${backupProjectName[$k]}/";
 
           # Checking the nested directories
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Checking the nested directories";
 
-          for i in `ls ${pathway} -l -1t | grep '^d' |awk '{print $8}'`;
+          for i in $(ls ${pathway} -l -1t -q |awk '{print $9}');
           do
-            find ${pathway}${i} -mtime +${MAX_NUMBER_DAYS} -type d -exec rm -rf {} \;
+            echo ${pathway}${i}
+          
+            #find ${pathway}${i} -mtime +${MAX_NUMBER_DAYS} -type d -exec rm -rf {} \;
           done
 
           k=$(( k + 1 ))
@@ -294,7 +296,7 @@ clean_by_count ()
           # Checking the nested directories
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Checking the nested directories";
 
-          for i in $(ls ${pathway} -l -1t | grep '^d' |awk '{print $9}');
+          for i in $(ls ${pathway} -l -1t -q |awk '{print $9}');
           do
             if [ "${subdir_counter}" -ge "${preCount}" ]
             then

@@ -24,10 +24,6 @@ The Backuper-package is the original product of many hours of work by Stas Kiren
 #### <a name="feedback"></a> Feedback
 Feedback is most certainly welcome for this document. Send your additions, comments and criticisms to the itmnewsru@gmail.com
 
-
-----------
-
-
 ----------
 #### <a name="main-features"></a> Main Features (v1.3)
 
