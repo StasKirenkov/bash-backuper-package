@@ -289,14 +289,14 @@ clean_by_count ()
           # Backup directory
           pathway="$BACKUP_ROOT_DIR/${backupProjectName[$k]}/";
 
-          preCount=$((MAX_NUMBER_ARCHIVES-1));
+          preCount=$((MAX_NUMBER_ARCHIVES));
 
           # Checking the nested directories
           message_str="$message_str\r\r$(date +%Y_%m_%d_%H_%M_%S) - Checking the nested directories";
 
           for i in $(ls "${pathway}" -l -1t -q |awk '{print $9}');
           do
-            if [ "${subdir_counter}" -ge "${preCount}" ]
+            if [ "${subdir_counter}" -gt "${MAX_NUMBER_ARCHIVES}" ]
             then
               rm -rf "${pathway}${i}";
             fi;
